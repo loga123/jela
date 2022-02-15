@@ -5,6 +5,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Meal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
@@ -78,7 +79,7 @@ class MealController extends Controller
             ->paginate($perPage);*/
 
 
-        $meals = Meal::where(function($query) use ($with,$perPage,$tags,$category) {
+        $meals = Meal::where(function($query) use ($with,$perPage,$tags,$category,$diff_time) {
 
             if(!empty($tags)){
                 $query->whereHas('tags', function ($query) use ($tags) {
@@ -98,16 +99,31 @@ class MealController extends Controller
                 }
             }
 
-            if(!empty($diff_time) && is_numeric($diff_time)){
+            /*if(!empty($diff_time) && is_numeric($diff_time)){
+                Log::alert('Usao u datum');
                 $diff_time=intval($diff_time);
+                //$diff_time = Carbon::createFromTimestamp($diff_time)->format('m/d/Y');
+                Log::alert($diff_time);
                 if ($diff_time>0){
-                    $query->whereDate('created_at','>=',$diff_time)
-                        ->orWhereDate('updated_at','>=',$diff_time)
-                        ->orWhereDate('deleted_at','>=',$diff_time)
-                        ->withTrashed();
-                }
+                    $query->whereDate('created_at','>',$diff_time)
+                        ->where('updated_at',function ($query) use ($diff_time) {
+                            $query->where('updated_at', '>', 'created_at')
+                                ->whereDate('updated_at','>' , $diff_time)
+                                ->transform(function ($meal) {
+                                    $meal->status = 'modified';
+                                });
+                        })->where('deleted_at',function ($query) use ($diff_time) {
+                            $query->whereDate('deleted_at','>',$diff_time)
+                                ->transform(function ($meal) {
+                                    $meal->status = 'deleted';
+                                });
 
-            }
+
+                        });
+
+                }
+                $query->withTrashed();
+            }*/
 
 
         })->with($relations)
