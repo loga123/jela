@@ -17,15 +17,19 @@ class Language extends Seeder
             'HRVATSKI JEZIK',
             'ENGLESKI JEZIK',
             'FRANCUSKI JEZIK',
+            'NJEMAČKI JEZIK',
+            'NIZOZEMSKI JEZIK',
             'hr',
             'en',
-            'fr'
+            'fr',
+            'de',
+            'nl'
         ];
 
-        for($i=0;$i<3;$i++){
+        for($i=0;$i<5;$i++){
             \App\Models\Language::create([
                 'name' => $languages[$i],
-                'slug' => $languages[$i+3]
+                'slug' => $languages[$i+5]
             ]);
 
         }
