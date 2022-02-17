@@ -13,4 +13,5 @@ class MealIngredient extends Model
         'meal_id',
         'ingredient_id',
     ];
+
 }

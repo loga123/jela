@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class MealTag extends Model
+class CategoryTranslation extends Model
 {
     use HasFactory;
 
-    protected $fillable=[
-        'meal_id',
-        'tag_id',
+    public $timestamps = false;
+
+    protected $fillable = [
+        'title'
     ];
 
 }

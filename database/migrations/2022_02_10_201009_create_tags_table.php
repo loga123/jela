@@ -15,9 +15,6 @@ class CreateTagsTable extends Migration
     {
         Schema::create('tags', function (Blueprint $table) {
             $table->id();
-            $table->string('title_hr')->nullable();
-            $table->string('title_en')->nullable();
-            $table->string('title_fr')->nullable();
             $table->string('slug',50)->unique()->comment('JEDINSTVENA OZNAKA');
             $table->timestamps();
             $table->softDeletes();

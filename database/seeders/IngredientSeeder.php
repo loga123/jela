@@ -14,22 +14,20 @@ class IngredientSeeder extends Seeder
      */
     public function run()
     {
-        $ingradients = [
-            'sastojak jela na HRV jeziku',
-            'ingradient meal in ENG language',
-            'ingradient un repas en FR',
-            'ingradient-'
-        ];
+        for($i=1;$i<=100;$i++){
 
-        for($i=1;$i<100;$i++){
-            Ingredient::create([
+            $ingredient = Ingredient::create([
                 'id'=>$i,
-                'title_hr' => "" . ($i) . ". " . $ingradients[0] . "",
-                'title_en' => "" . ($i) . ". " . $ingradients[1] . "",
-                'title_fr' => "" . ($i) . ". " . $ingradients[2] . "",
-                'slug' => "" . $ingradients[3] . "" . ($i) . ""
+                'slug' => "ingredient-" . ($i) . ""
             ]);
 
+            foreach (['hr','en', 'nl', 'fr', 'de'] as $locale) {
+                $ingredient->translateOrNew($locale)->title = "" . ($i) .". sastojak jela na ".strtoupper($locale)." jeziku";
+            }
+
+            $ingredient->save();
+
         }
+
     }
 }

@@ -14,21 +14,20 @@ class CategorySeeder extends Seeder
      */
     public function run()
     {
-        $categories = [
-            'kategorija jela na HRV jeziku',
-            'category meal in ENG language',
-            'categorie un repas en FR',
-            'category-'
-        ];
+        for($i=1;$i<=100;$i++){
 
-        for($i=1;$i<100;$i++){
-            Category::create([
+            $category = Category::create([
                 'id'=>$i,
-                'title_hr' => "" . ($i) . ". " . $categories[0] . "",
-                'title_en' => "" . ($i) . ". " . $categories[1] . "",
-                'title_fr' => "" . ($i) . ". " . $categories[2] . "",
-                'slug' => "" . $categories[3] . "" . ($i) . ""
+                'slug' => "category-" . ($i) . ""
             ]);
+
+            foreach (['hr','en', 'nl', 'fr', 'de'] as $locale) {
+                $category->translateOrNew($locale)->title = "" . ($i) .". kategorija jela na ".strtoupper($locale)." jeziku";
+            }
+
+            $category->save();
+
         }
+
     }
 }

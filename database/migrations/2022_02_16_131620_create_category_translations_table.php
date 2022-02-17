@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateMealsTable extends Migration
+class CreateCategoryTranslationsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,13 @@ class CreateMealsTable extends Migration
      */
     public function up()
     {
-        Schema::create('meals', function (Blueprint $table) {
-            $table->id();
-            $table->string('status')->default('created');
-            $table->string('slug',50)->unique()->comment('JEDINSTVENA OZNAKA');
-            $table->bigInteger('category_id')->unsigned()->index()->nullable();
-            $table->timestamps();
-            $table->softDeletes();
+        Schema::create('category_translations', function (Blueprint $table) {
+            $table->increments('id');
+            $table->bigInteger('category_id')->unsigned();
+            $table->string('locale')->index();
+            $table->string('title');
 
+            $table->unique(['category_id', 'locale']);
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });
     }
@@ -32,6 +31,6 @@ class CreateMealsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('meals');
+        Schema::dropIfExists('category_translations');
     }
 }

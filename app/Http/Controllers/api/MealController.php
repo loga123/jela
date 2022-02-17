@@ -3,25 +3,26 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetMealRequest;
 use App\Models\Meal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class MealController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+    public function index(GetMealRequest $request)
     {
+
         global $relations;
         global $tags;
-        //http://127.0.0.1:8000/api/meal?per_page=5&tags=2&lang=hr&with=ingredients,category,tags&diff_time=1493902343&page=2
-        //dd($request->all());
 
         //dohvat ovisnosti iz upita
         $perPage = $request['perPage'];
@@ -39,7 +40,6 @@ class MealController extends Controller
             App::setLocale($lang);
         }
 
-
         //ako nema broja po stranici dohvati 15
         if (empty($perPage)){
             $perPage=15;
@@ -48,7 +48,6 @@ class MealController extends Controller
         //provjera da li u upitu postoje relacije za jela
         if (!empty($with)){
             $relations = explode(",", $with);
-            //Log::alert(json_encode($relations));
         }else{
             $relations=[];
         }
@@ -56,30 +55,11 @@ class MealController extends Controller
         //provjera da li u upitu postoje tagovi
         if (!empty($ttags)){
             $tags = explode(",", $ttags);
-            Log::alert(json_encode($tags));
         }else{
             $tags=[];
         }
 
-
-       /* $meals = Meal::leftjoin('categories','categories.id','=','meals.category_id')
-            ->leftjoin('meal_tags','meals.id','=','meal_tags.meal_id')
-            ->where(function ($query) use($tags) {
-                for ($i = 0; $i < count($tags); $i++){
-                    $query->where('meal_tags.tag_id','=', $tags[$i]);
-                }
-
-            })
-            ->leftjoin('tags','tags.id','=','meal_tags.tag_id')
-            ->leftjoin('meal_ingredients','meals.id','=','meal_ingredients.meal_id')
-            ->leftjoin('ingredients','ingredients.id','=','meal_ingredients.ingredient_id')
-            ->select('meals.*')
-            ->distinct('meals.id')
-            ->with($relations)
-            ->paginate($perPage);*/
-
-
-        $meals = Meal::where(function($query) use ($with,$perPage,$tags,$category,$diff_time) {
+        $meals = Meal::where(function($query) use ($with,$perPage,$tags,$category,$diff_time,$lang) {
 
             if(!empty($tags)){
                 $query->whereHas('tags', function ($query) use ($tags) {
@@ -99,62 +79,47 @@ class MealController extends Controller
                 }
             }
 
-            /*if(!empty($diff_time) && is_numeric($diff_time)){
-                Log::alert('Usao u datum');
+           /* if(!empty($diff_time) && is_numeric($diff_time)){
+
                 $diff_time=intval($diff_time);
-                //$diff_time = Carbon::createFromTimestamp($diff_time)->format('m/d/Y');
-                Log::alert($diff_time);
+
                 if ($diff_time>0){
                     $query->whereDate('created_at','>',$diff_time)
-                        ->where('updated_at',function ($query) use ($diff_time) {
+                        ->orWhere('updated_at',function ($query) use ($diff_time) {
                             $query->where('updated_at', '>', 'created_at')
-                                ->whereDate('updated_at','>' , $diff_time)
-                                ->transform(function ($meal) {
-                                    $meal->status = 'modified';
-                                });
-                        })->where('deleted_at',function ($query) use ($diff_time) {
-                            $query->whereDate('deleted_at','>',$diff_time)
-                                ->transform(function ($meal) {
-                                    $meal->status = 'deleted';
-                                });
-
+                                ->whereDate('updated_at','>' , $diff_time);
+                        })->orWhere('deleted_at',function ($query) use ($diff_time) {
+                            $query->whereDate('deleted_at','>',$diff_time);
 
                         });
-
                 }
-                $query->withTrashed();
+               // $query->withTrashed();
             }*/
 
 
         })->with($relations)
             ->paginate($perPage);
 
-        return $meals;
+        $meals->appends(request()->query())->links();
 
+        return response()
+            ->json([
+                'meta' => [
+                    "currentPage"=>$meals->currentPage(),
+                    "totalItems"=>$meals->total(),
+                    "itemsPerPage"=>$meals->perPage(),
+                    "totalPages"=> $meals->lastPage()
+                ],
+                'data' =>$meals->items(),
+                'links' => [
+                    "prev"=>$meals->previousPageUrl(),
+                    "next"=>$meals->nextPageUrl(),
+                    "self"=>$request->fullUrl(),
 
-        /*all = Education::where(function($query) use ($search,$projects,$start_date,$stop_date){
-            $query->whereDate('start_date',$start_date)
-                ->whereDate('stop_date',$stop_date)
-                ->orWhere('schedule','LIKE',"%$search%")
-                ->orWhere('other_name','LIKE',"%$search%")
-                ->orWhereHas('course', function ($query) use ($search) {
-                    $query->where('name','LIKE',"%$search%");
-                })
-                ->orWhereHas('project', function ($query) use ($search,$projects) {
-                    $query->whereIn('name', $projects );
-                })
-                ->orWhereHas('teacher', function ($query) use ($search) {
-                    $query->where('name','LIKE',"%$search%")
-                        ->orWhere('last_name','LIKE',"%$search%");
-                })
-                ->orWhereHas('children', function ($query) use ($search) {
-                    $query->where('name','LIKE',"%$search%")
-                        ->orWhere('last_name','LIKE',"%$search%");
-                });
+                ],
 
-        })->with('course','project','teacher','children')
-          //  ->orderBy($sortBy,$sortDesc)
-            ->paginate($perPage);*/
+            ]);
+
     }
 
     /**
